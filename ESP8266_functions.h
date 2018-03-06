@@ -1,233 +1,194 @@
-/* Microchip Technology Inc. and its subsidiaries.  You may use this software 
- * and any derivatives exclusively with Microchip products. 
+/**
+ * C library for the ESP8266 WiFi module with a PIC microcontroller
+ * Copyright (C) 2015 Camil Staps <info@camilstaps.nl>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ *****************************************************************************
+ *ORIGINALLY CREATED AS
+ * File:    esp8266.h
+ * Author:  Camil Staps <info@camilstaps.nl>
+ * Website: http://github.com/camilstaps/ESP8266_PIC
+ * Version: 0.1
  * 
- * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS".  NO WARRANTIES, WHETHER 
- * EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED 
- * WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A 
- * PARTICULAR PURPOSE, OR ITS INTERACTION WITH MICROCHIP PRODUCTS, COMBINATION 
- * WITH ANY OTHER PRODUCTS, OR USE IN ANY APPLICATION. 
+ * MODFIED AND IMPROVED BY
+ * File:    esp8266_functions.h
+ * Author:  Aswinth Raj B  <mailtoaswinth@gmail.com>
+ * Website: circuitdigest.com
+ * Version: 0.1
  *
- * IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
- * INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND 
- * WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS 
- * BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE.  TO THE 
- * FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS 
- * IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF 
- * ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ * See:   circuitdigest.com for more explanation
  *
- * MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE 
- * TERMS. 
+ * This is the header file for the ESP8266 PIC16F877A library where ESP runs on 115200 baudrate. 
+ *
+ *  * 
+ * MODFIED AND IMPROVED BY
+ * File:    esp8266_functions.h
+ * Author:  Phillipe Sedycias de Queiroz  <phillipesedycias@hotmail.com>
+ * Website: www.philseque.com
+ * Version: 0
+ *
+ * See:   circuitdigest.com for more explanation
+ *
+ * This is the header file for the ESP8266 PIC16F877A library where ESP runs on 115200 baudrate. 
+ *
  */
 
-/* 
- * File:  lcd.h 
- * Author: Camil Staps | Electrosom | Circuitdigest
- * Comments: Library Adapted by LCD 16x4 and included new functions (clear line)
- * By: Phillipe Sedycias de Queiroz
- * www.philseque.com
- */
+
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "lcd.h"
+#include <xc.h>
 
 
-//****************Definição dos pinos do PIC que irão no LCD****************
-//************************PIC port settings on the LCD ****************
-#define RS RB3  //ok
-#define EN RB0  //ok
-#define D4 RB4  //ok
-#define D5 RB5  //ok
-#define D6 RB6  //ok
-#define D7 RB7  //ok
-//****************Fim das definições dos pinos do PIC que irão no LCD****************
+#define ESP8266_STATION 0x01
+#define ESP8266_SOFTAP 0x02
 
-//****************Inicio das rotinas para LCD****************
-void Lcd_Port(unsigned char a)
+#define ESP8266_TCP 1
+#define ESP8266_UDP 0
+
+#define ESP8266_OK 1
+#define ESP8266_READY 2
+#define ESP8266_FAIL 3
+#define ESP8266_NOCHANGE 4
+#define ESP8266_LINKED 5
+#define ESP8266_UNLINK 6
+#define LED1ON 1
+#define LED1OFF 2
+#define LED2ON 3
+#define LED2OFF 4
+
+int len;
+
+
+///***______________________ESP module Function Declarations__________________**///
+void _esp8266_putch(unsigned char);
+unsigned char _esp8266_getch(void);
+/** Function prototypes **/
+bit esp8266_isStarted(void);        // Check if the module is started (AT)
+bit esp8266_restart(void);          // Restart module (AT+RST)
+void esp8266_echoCmds(bool);        // Enabled/disable command echoing (ATE)
+// WIFI Mode (station/softAP/station+softAP) (AT+CWMODE)
+void esp8266_mode(unsigned char);
+// Connect to AP (AT+CWJAP)
+void esp8266_connect(unsigned char*, unsigned char*);
+// Disconnect from AP (AT+CWQAP)
+void esp8266_disconnect(void);
+// Local IP (AT+CIFSR)
+void esp8266_ip(char*);
+// Create connection (AT+CIPSTART)
+bit esp8266_start(unsigned char protocol, char* ip, unsigned char port);
+// Send data (AT+CIPSEND)
+bit esp8266_send(unsigned char*);
+// Receive data (+IPD)
+void esp8266_receive(unsigned char*, uint16_t, bool);
+/** Functions for internal use only **/
+// Print a string to the output
+void _esp8266_print(unsigned const char *);
+// Wait for a certain string on the input
+inline uint16_t _esp8266_waitFor(unsigned char *);
+// Wait for any response on the input
+inline unsigned char _esp8266_waitResponse(void);
+inline unsigned char _esp8266_waitResponse2(void); 
+
+void Lcd_Write_Char(char);
+void Lcd_Wtrite_String(unsigned char *);
+void Lcd_Clear();
+void Lcd_Init();
+void Lcd_Set_Cursor(unsigned char,unsigned char);
+void Lcd_Cmd(unsigned char);
+void Lcd_Port(unsigned char);
+
+void _esp8266_login_mail(unsigned char*, unsigned char*);
+void _esp8266_mail_sendID(unsigned char*);
+void _esp8266_mail_recID(unsigned char*);
+void _esp8266_mail_subject(unsigned char*);
+void _esp8266_mail_body(unsigned char*);
+void envia_pagina();
+void recebe_pagina();
+void inicia_esp8266();
+//********__________________End of Function Declaration_________________********///
+
+
+
+
+
+
+//***Initialize UART for ESP8266**//
+void Initialize_ESP8266(void)
 {
-	if(a & 1)
-		D4 = 1;
-	else
-		D4 = 0;
-
-	if(a & 2)
-		D5 = 1;
-	else
-		D5 = 0;
-
-	if(a & 4)
-		D6 = 1;
-	else
-		D6 = 0;
-
-	if(a & 8)
-		D7 = 1;
-	else
-		D7 = 0;
-}
-void Lcd_Cmd(unsigned char a)
-{
-	RS = 0;             // => RS = 0
-	Lcd_Port(a);
-	EN  = 1;             // => E = 1
-        __delay_ms(4);
-        EN  = 0;             // => E = 0
-}
-
-void Lcd_Clear()
-{
-	Lcd_Cmd(0);
-	Lcd_Cmd(1);
-}
-
-
-//função para direcionamento do cursor (linha,coluna))
-void Lcd_Set_Cursor(unsigned char a,unsigned char b)
-{
-	char temp,z,y;
-	if(a == 1)
-	{
-	  temp = 0x80 + b - 1;
-		z = temp>>4;
-		y = temp & 0x0F;
-		Lcd_Cmd(z);
-		Lcd_Cmd(y);
-	}
-	else if(a == 2)
-	{
-		temp = 0xC0 + b - 1;
-		z = temp>>4;
-		y = temp & 0x0F;
-		Lcd_Cmd(z);
-		Lcd_Cmd(y);
-	}
-    else if(a == 3)
-	{
-		temp = 0x94 + b - 1;
-		z = temp>>4;
-		y = temp & 0x0F;
-		Lcd_Cmd(z);
-		Lcd_Cmd(y);
-	}
-    else if(a == 4)
-	{
-		temp = 0xD4 + b - 1;
-		z = temp>>4;
-		y = temp & 0x0F;
-		Lcd_Cmd(z);
-		Lcd_Cmd(y);
-	}
+    //****Setting I/O pins for UART****//
+    TRISBbits.TRISB2 = 0; // TX Pin set as output
+    TRISBbits.TRISB1 = 1; // RX Pin set as input
+    //________I/O pins set __________//
     
+    /**Initialize SPBRG register for required 
+    baud rate and set BRGH for fast baud_rate**/
+    SPBRG = 10;
+    BRGH  = 1;  // for high baud_rate
+    //_________End of baud_rate setting_________//
     
+    //****Enable Asynchronous serial port*******//
+    SYNC  = 0;    // Asynchronous
+    SPEN  = 1;    // Enable serial port pins
+    //_____Asynchronous serial port enabled_______//
+    //**Lets prepare for transmission & reception**//
+    TXEN  = 1;    // enable transmission
+    CREN  = 1;    // enable reception
+    //__UART module up and ready for transmission and reception__//
+    
+    //**Select 8-bit mode**//  
+    TX9   = 0;    // 8-bit reception selected
+    RX9   = 0;    // 8-bit reception mode selected
+    //__8-bit mode selected__//     
 }
-
-void Lcd_Init()
-{
-  Lcd_Port(0x00);
-   __delay_ms(20);
-  Lcd_Cmd(0x03);
-	__delay_ms(5);
-  Lcd_Cmd(0x03);
-	__delay_ms(11);
-  Lcd_Cmd(0x03);
-  /////////////////////////////////////////////////////
-  Lcd_Cmd(0x02);
-  Lcd_Cmd(0x02);
-  Lcd_Cmd(0x08);
-  Lcd_Cmd(0x00);
-  Lcd_Cmd(0x0C);
-  Lcd_Cmd(0x00);
-  Lcd_Cmd(0x06);
-}
-
-void Lcd_Write_Char(unsigned char a)
-{
-   char temp,y;
-   temp = a&0x0F;
-   y = a&0xF0;
-   RS = 1;             // => RS = 1
-   Lcd_Port(y>>4);             //Data transfer
-   EN = 1;
-   __delay_us(40);
-   EN = 0;
-   Lcd_Port(temp);
-   EN = 1;
-   __delay_us(40);
-   EN = 0;
-}
-
-void Lcd_Write_String(unsigned char *a)
-{
-	int i;
-	for(i=0;a[i]!='\0';i++)
-	   Lcd_Write_Char(a[i]);
-}
-
-/* Funções desativadas para reduzir memória - disaber becouse this pic no have memory*/
-
-/*
-void Lcd_Shift_Right()
-{
-	Lcd_Cmd(0x01);
-	Lcd_Cmd(0x0C);
-}
-
-void Lcd_Shift_Left()
-{
-	Lcd_Cmd(0x01);
-	Lcd_Cmd(0x08);
-}
-//****************Fim das rotinas para LCD****************
+//________UART module Initialized__________//
 
 
 
-
-//Início da criação de caractere (função disponível no site electrosome.com)
-const unsigned short MyChar5x8[] = {
-  0x00, 0x00, 0x0A, 0x1F, 0x1F, 0x0E, 0x04, 0x00, // Code for char num #0
  
-  0x0E, 0x1B, 0x11, 0x11, 0x11, 0x11, 0x1F, 0x00, // Code for char num #1
-  0x0E, 0x1B, 0x11, 0x11, 0x11, 0x1F, 0x1F, 0x00, // Code for char num #2
-  
-  
-  //0x0E, 0x1B, 0x11, 0x11, 0x1F, 0x1F, 0x1F, 0x00, // Code for char num #3
-  0x00, 0x04, 0x0A, 0x08, 0x0E, 0x0E, 0x0E, 0x00,
- 
-  
-  0x00, 0x00, 0x04, 0x0A, 0x0E, 0x0E, 0x0E, 0x00, // Code for char num #4
-  
-  
-  //0x0E, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x00, // Code for char num #5
-  0x1C, 0x1C, 0x10, 0x00, 0x1C, 0x18, 0x1C, 0x00, // Code for char num #5
-  
-  
-  //0x00, 0x04, 0x02, 0x1F, 0x02, 0x04, 0x00, 0x00, // Code for char num #6
-  0x10, 0x10, 0x18, 0x02, 0x12, 0x13, 0x10, 0x00, // Code for char num #6
-  
-  
-  
-  //0x00, 0x00, 0x0E, 0x11, 0x11, 0x0A, 0x1B, 0x00  // Code for char num #7
-  0x1C, 0x1C, 0x10, 0x05, 0x17, 0x15, 0x10, 0x00  // Code for char num #7 (personalizado conforme imagem abaixo)
-  
-};
-
-void InitCustomChars() //(função disponível no site electrosome.com)
+//**Function to send one byte of date to UART **//
+void _esp8266_putch(char bt)  //Encaminha um bute de dados para UART
 {
-  char i;
-  Lcd_Cmd(0x04);   // Set CGRAM Address
-  Lcd_Cmd(0x00);   // .. set CGRAM Address
-  for (i = 0; i <= 63 ; i++)
-    Lcd_Write_Char(MyChar5x8[i]);
-  Lcd_Cmd(0);      // Return to Home
-  Lcd_Cmd(2);      // .. return to Home
+    while(!TXIF);  // hold the program till TX buffer is free
+                    //espera o transmissor ficar livre
+    
+    TXREG = bt; //Load the transmitter buffer with the received value
+                //carrega o transmissor com o valor recebido bt
 }
-//Fim da criação de caractere
+//_____________End of function________________//
 
 
-void Lcd_Clear_Line(unsigned char L) {
-    Lcd_Set_Cursor(L,1);
-    Lcd_Write_String("                    ");   
+ 
+//**Function to get one byte of date from UART**//
+char _esp8266_getch()   
+{
+
+    if(OERR) // check for Error 
+    {
+        CREN = 0; //If error -> Reset 
+        CREN = 1; //If error -> Reset 
+    }
+    
+    while(!RCIF); // hold the program till RX buffer is free
+                  //repera RX ficar livre
+        
+    return RCREG; //receive the value and send it to main function
+                  //pega o valor recebido e emcaminha para função main
 }
-
-*/
+//_____________End of function________________//
