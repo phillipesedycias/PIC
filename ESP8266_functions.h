@@ -189,7 +189,7 @@ char _esp8266_getch()
                   //repera RX ficar livre
         
     return RCREG; //receive the value and send it to main function
-                  //pega o valor recebido e emcaminha para função main
+                  //pega o valor recebido e emcaminha para funÃ§Ã£o main
 }
 //_____________End of function________________//
  
@@ -833,7 +833,7 @@ void inicia_esp8266() {
     //Lcd_Write_String("Modo AP");
     //__delay_ms(300);
     
-    esp8266_connect("CEP","03042017LUNA"); //somente no modo 1 ou 3
+    esp8266_connect("Nomedesuawifi","senhadesuaWifi"); //somente no modo 1 ou 3
 
     //Lcd_Set_Cursor(1,1);
     //Lcd_Write_String("Conectado a CEP");
@@ -844,7 +844,7 @@ void inicia_esp8266() {
             unsigned char meuip[4];
             unsigned char data[30]; 
             //verificando o IP
-            esp8266_ip(meuip);      //função que carrega o ip no vetor de entrada
+            esp8266_ip(meuip);      //funÃ§Ã£o que carrega o ip no vetor de entrada
             sprintf(data,"IP: %d.%d.%d.%d",meuip[0],meuip[1],meuip[2],meuip[3]); //carrega o ip na string data
             Lcd_Clear_Line(4);
             Lcd_Set_Cursor(4,1);
