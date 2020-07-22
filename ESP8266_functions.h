@@ -836,9 +836,9 @@ void inicia_esp8266() {
     esp8266_connect("Nomedesuawifi","senhadesuaWifi"); //somente no modo 1 ou 3
 
     //Lcd_Set_Cursor(1,1);
-    //Lcd_Write_String("Conectado a CEP");
+    //Lcd_Write_String("Conectado a Wi-Fi");
     //__delay_ms(1000);
-    //esp8266_config_softAP("PSQ","03042017");//somente no modo 2 ou 3 Cria Wifi pelo ESP
+    //esp8266_config_softAP("NomeWifi","senhaWiFi");//somente no modo 2 ou 3 Cria Wifi pelo ESP
     
     /*
             unsigned char meuip[4];
